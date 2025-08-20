@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WebAR Cinemaps</title>
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/2.2.1/aframe/build/aframe-ar.js"></script>
+    <style>
+      #ui {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        text-align: center;
+        z-index: 999;
+      }
+      button {
+        padding: 10px 10px;
+        margin: 5px;
+        font-size: 16px;
+      }
+      #label {
+        position: fixed;
+        top: 20px;
+        width: 100%;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 0 5px black;
+        z-index: 999;
+      }
+    </style>
+  </head>
+  <body style="margin:0; overflow:hidden;">
+    <div id="label">Posko KKN</div>
+    <div id="ui">
+      <button onclick="prevVideo()">⏪ </button>
+      <button onclick="nextVideo()">⏩ </button>
+    </div>
+
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <!-- Video Assets -->
+      <a-assets>
+        <video id="vid1" src="https://raw.githubusercontent.com/felataliaa/asetAR/main/poskokkn.mp4" muted playsinline></video>
+        <video id="vid2" src="https://raw.githubusercontent.com/felataliaa/asetAR/main/joglo.mp4" muted playsinline></video>
+        <video id="vid3" src="https://raw.githubusercontent.com/felataliaa/asetAR/main/batukapal.mp4" muted playsinline></video>
+        <video id="vid4" src="https://raw.githubusercontent.com/felataliaa/asetAR/main/plunyon.mp4" muted playsinline></video>
+      </a-assets>
+
+      <!-- Video Plane -->
+      <a-plane id="videoPlane" position="0 0 -3" rotation="0 0 0" width="4" height="2.25"
+               src="#vid1" autoplay="true">
+      </a-plane>
+
+      <a-camera></a-camera>
+    </a-scene>
+
+    <script>
+      let videos = [
+        {id:"#vid1", name:"Posko KKN"},
+        {id:"#vid2", name:"Joglo Wanagama"},
+        {id:"#vid3", name:"Batu Kapal"},
+        {id:"#vid4", name:"Jembatan Plunyon"}
+      ];
+      let current = 0;
+
+      function showVideo(index) {
+        document.querySelector("#videoPlane").setAttribute("src", videos[index].id);
+        document.getElementById("label").innerText = videos[index].name;
+        let vid = document.querySelector(videos[index].id);
+        vid.play();
+      }
+
+      function nextVideo() {
+        current = (current + 1) % videos.length;
+        showVideo(current);
+      }
+
+      function prevVideo() {
+        current = (current - 1 + videos.length) % videos.length;
+        showVideo(current);
+      }
+
+      // Unlock autoplay after first tap
+      document.body.addEventListener("click", () => {
+        videos.forEach(v => document.querySelector(v.id).play());
+      });
+    </script>
+  </body>
+</html>
