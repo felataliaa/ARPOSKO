@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Cinemaps WebAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <style>
@@ -63,6 +64,10 @@
         top: 50%;
         transform: translateY(-50%);
         overflow: hidden;
+        z-index: 1000;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
       
       #prevButton {
@@ -161,35 +166,7 @@
         60% { transform: translateY(-10px); }
       }
       
-      /* Video Info Panel */
-      #videoInfo {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 15px 25px;
-        border-radius: 25px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: center;
-        opacity: 0;
-        transition: all 0.3s ease;
-        z-index: 998;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      }
-      
-      #videoInfo.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-      
-      .video-counter {
-        font-size: 14px;
-        opacity: 0.8;
-        margin-top: 5px;
-      }
+
       
       /* Mobile Optimizations */
       @media (max-width: 768px) {
@@ -225,99 +202,7 @@
           font-size: 60px;
         }
         
-        #videoInfo {
-          bottom: 15px;
-          padding: 12px 20px;
-          max-width: calc(100% - 30px);
-        }
-      }
-      
-      @media (max-width: 480px) {
-        #ui {
-          padding: 10px 15px;
-        }
-        
-        #title {
-          font-size: 16px;
-        }
-        
-        .nav-button {
-          width: 50px;
-          height: 50px;
-          font-size: 18px;
-          padding: 8px;
-        }
-        
-        #prevButton {
-          left: 10px;
-        }
-        
-        #nextButton {
-          right: 10px;
-        }
-        
-        .tap-instruction {
-          font-size: 18px;
-        }
-        
-        .tap-icon {
-          font-size: 50px;
-        }
-        
-        #videoInfo {
-          padding: 10px 18px;
-          font-size: 14px;
-        }
-      }
-      
-      /* Landscape mode adjustments */
-      @media (orientation: landscape) and (max-height: 500px) {
-        #ui {
-          padding: 8px 15px;
-        }
-        
-        #title {
-          font-size: 16px;
-        }
-        
-        .nav-button {
-          width: 45px;
-          height: 45px;
-          font-size: 16px;
-        }
-        
-        #prevButton {
-          left: 8px;
-        }
-        
-        #nextButton {
-          right: 8px;
-        }
-        
-        .tap-instruction {
-          font-size: 20px;
-        }
-        
-        .tap-icon {
-          font-size: 40px;
-          margin-bottom: 15px;
-        }
-        
-        #videoInfo {
-          bottom: 10px;
-          padding: 8px 15px;
-          font-size: 13px;
-        }
-      }
-      
-      /* Loading animation for video plane */
-      @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.8); }
-        to { opacity: 1; transform: scale(1); }
-      }
-      
-      .video-loaded {
-        animation: fadeIn 0.5s ease-out;
+
       }
     </style>
   </head>
@@ -334,14 +219,13 @@
     </div>
     
     <!-- Navigation Buttons -->
-    <button id="prevButton" class="nav-button" onclick="prevVideo()" title="Video Sebelumnya"><</button>
-    <button id="nextButton" class="nav-button" onclick="nextVideo()" title="Video Selanjutnya">></button>
-    
-    <!-- Video Info Panel -->
-    <div id="videoInfo">
-      <div id="videoTitle">Posko KKN</div>
-      <div class="video-counter" id="videoCounter">1 / 4</div>
-    </div>
+   <button id="prevButton" class="nav-button" title="Video Sebelumnya">
+    <i class="ri-arrow-left-line"></i>
+  </button>
+
+  <button id="nextButton" class="nav-button" title="Video Selanjutnya">
+    <i class="ri-arrow-right-line"></i>
+  </button>
     
     <!-- AR Scene -->
     <a-scene
@@ -400,10 +284,10 @@
 
     <script>
       const videos = [
-        { id: "#vid1", title: "Posko KKN" },
-        { id: "#vid2", title: "Joglo Wanagama" },
-        { id: "#vid3", title: "Batu Kapal" },
-        { id: "#vid4", title: "Jembatan Plunyon" }
+        { id: "vid1", title: "Posko KKN" },
+        { id: "vid2", title: "Joglo Wanagama" },
+        { id: "vid3", title: "Batu Kapal" },
+        { id: "vid4", title: "Jembatan Plunyon" }
       ];
       
       let currentIndex = 0;
@@ -411,10 +295,19 @@
       
       const plane = document.getElementById("videoPlane");
       const title = document.getElementById("title");
-      const videoInfo = document.getElementById("videoInfo");
-      const videoTitle = document.getElementById("videoTitle");
-      const videoCounter = document.getElementById("videoCounter");
       const tapOverlay = document.getElementById("tapOverlay");
+      const prevButton = document.getElementById("prevButton");
+      const nextButton = document.getElementById("nextButton");
+      
+      // Function to pause all videos except the current one
+      function pauseAllVideos() {
+        videos.forEach(v => {
+          const videoEl = document.getElementById(v.id);
+          if (videoEl) {
+            videoEl.pause();
+          }
+        });
+      }
       
       // Function to start video on first tap
       function startVideo() {
@@ -428,17 +321,6 @@
         plane.setAttribute("material", "opacity", "1");
         plane.classList.add("video-loaded");
         
-        // Show video info
-        setTimeout(() => {
-          videoInfo.classList.add("show");
-        }, 500);
-        
-        // Start all videos
-        videos.forEach(v => {
-          const videoEl = document.querySelector(v.id);
-          videoEl.play().catch(e => console.log("Video play error:", e));
-        });
-        
         updateVideo();
       }
       
@@ -446,24 +328,36 @@
       function updateVideo() {
         if (!videoStarted) return;
         
+        console.log('Switching to video index:', currentIndex);
+        
+        // Pause all videos first
+        pauseAllVideos();
+        
         const v = videos[currentIndex];
-        plane.setAttribute("material", "src", v.id);
+        const currentVideoEl = document.getElementById(v.id);
+        
+        if (!currentVideoEl) {
+          console.error('Video element not found:', v.id);
+          return;
+        }
+        
+        // Update material source
+        plane.setAttribute("material", "src", "#" + v.id);
+        
+        // Update UI
         title.innerText = v.title;
-        videoTitle.innerText = v.title;
-        videoCounter.innerText = `${currentIndex + 1} / ${videos.length}`;
         
         // Play current video
-        const videoEl = document.querySelector(v.id);
-        videoEl.currentTime = 0; // Reset to beginning
-        videoEl.play().catch(e => console.log("Video play error:", e));
+        currentVideoEl.currentTime = 0; // Reset to beginning
+        const playPromise = currentVideoEl.play();
         
-        // Animate video info update
-        videoInfo.style.transform = "translateX(-50%) translateY(10px)";
-        videoInfo.style.opacity = "0.7";
-        setTimeout(() => {
-          videoInfo.style.transform = "translateX(-50%) translateY(0)";
-          videoInfo.style.opacity = "1";
-        }, 150);
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('Video playing successfully');
+          }).catch(error => {
+            console.error('Error playing video:', error);
+          });
+        }
       }
       
       // Navigation functions
@@ -473,6 +367,7 @@
           return;
         }
         currentIndex = (currentIndex + 1) % videos.length;
+        console.log('Next video - new index:', currentIndex);
         updateVideo();
       }
       
@@ -482,12 +377,50 @@
           return;
         }
         currentIndex = (currentIndex - 1 + videos.length) % videos.length;
+        console.log('Previous video - new index:', currentIndex);
         updateVideo();
       }
       
       // Event listeners
-      document.body.addEventListener("click", startVideo);
-      document.body.addEventListener("touchstart", startVideo);
+      document.body.addEventListener("click", function(e) {
+        // Don't trigger startVideo if clicking navigation buttons
+        if (e.target.closest('.nav-button')) {
+          return;
+        }
+        startVideo();
+      });
+      
+      document.body.addEventListener("touchstart", function(e) {
+        // Don't trigger startVideo if touching navigation buttons
+        if (e.target.closest('.nav-button')) {
+          return;
+        }
+        startVideo();
+      });
+      
+      // Add click listeners to navigation buttons
+      nextButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        nextVideo();
+      });
+      
+      prevButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        prevVideo();
+      });
+      
+      // Add touch listeners to navigation buttons for mobile
+      nextButton.addEventListener("touchstart", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        nextVideo();
+      });
+      
+      prevButton.addEventListener("touchstart", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        prevVideo();
+      });
       
       // Prevent context menu on long press (mobile)
       document.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -497,30 +430,47 @@
         setTimeout(() => {
           // Refresh video if needed
           if (videoStarted) {
-            const videoEl = document.querySelector(videos[currentIndex].id);
-            videoEl.play().catch(e => console.log("Video play error:", e));
+            updateVideo();
           }
         }, 100);
       });
       
       // Initialize
       document.addEventListener("DOMContentLoaded", () => {
-        // Set initial video counter
-        videoCounter.innerText = `1 / ${videos.length}`;
+        // Wait for A-Frame to be ready
+        document.querySelector('a-scene').addEventListener('loaded', () => {
+          console.log('A-Frame scene loaded');
+        });
       });
       
-      // Handle video errors
+      // Handle video errors and loading
       videos.forEach((v, index) => {
-        const videoEl = document.querySelector(v.id);
-        videoEl.addEventListener("error", (e) => {
-          console.error(`Error loading video ${index + 1}:`, e);
-        });
-        
-        videoEl.addEventListener("loadeddata", () => {
-          console.log(`Video ${index + 1} loaded successfully`);
-        });
+        const videoEl = document.getElementById(v.id);
+        if (videoEl) {
+          videoEl.addEventListener("error", (e) => {
+            console.error(`Error loading video ${index + 1}:`, e);
+          });
+          
+          videoEl.addEventListener("loadeddata", () => {
+            console.log(`Video ${index + 1} loaded successfully`);
+          });
+          
+          videoEl.addEventListener("canplay", () => {
+            console.log(`Video ${index + 1} can play`);
+          });
+        }
+      });
+      
+      // Add keyboard controls for testing
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "ArrowRight" || e.code === "Space") {
+          e.preventDefault();
+          nextVideo();
+        } else if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          prevVideo();
+        }
       });
     </script>
   </body>
-
 </html>
