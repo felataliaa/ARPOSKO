@@ -219,13 +219,12 @@
     </div>
     
     <!-- Navigation Buttons -->
-   <button id="prevButton" class="nav-button" title="Video Sebelumnya">
-    <i class="ri-arrow-left-line"></i>
-  </button>
-
-  <button id="nextButton" class="nav-button" title="Video Selanjutnya">
-    <i class="ri-arrow-right-line"></i>
-  </button>
+   <button id="prevButton" class="nav-button" onclick="prevVideo()">
+      <i class="ri-skip-back-fill"></i>
+    </button>
+    <button id="nextButton" class="nav-button" onclick="nextVideo()">
+      <i class="ri-skip-forward-fill"></i>
+    </button>
     
     <!-- AR Scene -->
     <a-scene
