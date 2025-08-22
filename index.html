@@ -3,24 +3,122 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cinemaps WebAR - Marker Based</title>
+    <title>Cinemaps WebAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <style>
+      * {
+        box-sizing: border-box;
+      }
+      
       body { 
         margin: 0; 
         overflow: hidden; 
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #000;
         touch-action: manipulation;
       }
-
-      /* Marker Instructions */
-      #markerInstructions {
+      
+      /* UI Controls */
+      #ui {
         position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.9);
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%);
+        padding: 15px 25px;
+        border-radius: 25px;
+        z-index: 999;
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        backdrop-filter: blur(5px);
+        text-align: center;
+      }
+      
+      #title {
+        font-size: 20px;
+        font-weight: 600;
+        text-shadow: 0px 2px 8px rgba(0,0,0,0.8);
+        letter-spacing: 0.5px;
+      }
+      
+      .nav-button {
+        padding: 12px;
+        font-size: 24px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 90%;
+        transform: translateY(-50%);
+        overflow: hidden;
+        z-index: 1000;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      #prevButton {
+        left: 20px;
+      }
+      
+      #nextButton {
+        right: 20px;
+      }
+      
+      .nav-button:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .nav-button:hover:before {
+        left: 100%;
+      }
+      
+      .nav-button:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+      
+      #prevButton:hover {
+        transform: translateY(-50%) translateX(-2px) scale(1.1);
+      }
+      
+      #nextButton:hover {
+        transform: translateY(-50%) translateX(2px) scale(1.1);
+      }
+      
+      .nav-button:active {
+        transform: translateY(-50%) scale(0.95);
+      }
+      
+      /* Tap to Play Overlay */
+      #tapOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -28,353 +126,351 @@
         z-index: 10000;
         color: white;
         text-align: center;
-        padding: 20px;
-        box-sizing: border-box;
       }
       
-      .marker-icon { 
-        font-size: 60px; 
-        margin-bottom: 20px; 
+      #tapOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+      }
+      
+      .tap-instruction {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        animation: pulse 2s infinite;
+      }
+      
+      .tap-icon {
+        font-size: 80px;
+        margin-bottom: 30px;
         animation: bounce 2s infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
       }
       
-      .marker-text { 
-        font-size: 18px; 
-        font-weight: bold; 
-        margin-bottom: 15px;
-        max-width: 320px;
+      .subtitle {
+        font-size: 16px;
+        opacity: 0.8;
+        margin-top: 10px;
       }
       
-      .marker-subtitle { 
-        font-size: 14px; 
-        opacity: 0.8; 
-        max-width: 300px;
-        line-height: 1.4;
-        margin-bottom: 25px;
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
       }
-
-      .marker-sample {
-        width: 120px;
-        height: 120px;
-        background: white;
-        border: 3px solid #333;
-        margin: 15px auto;
-        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSJ3aGl0ZSIvPgo8cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iYmxhY2siLz4KPHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IndoaXRlIi8+CjxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibGFjayIvPgo8cmVjdCB4PSI0MCIgeT0iNDAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        border-radius: 8px;
-      }
-
-      .close-instructions {
-        background: rgba(255,255,255,0.2);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-size: 14px;
-        margin-top: 15px;
-        backdrop-filter: blur(10px);
-      }
-
+      
       @keyframes bounce {
         0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-10px); }
-        60% { transform: translateY(-5px); }
-      }
-
-      /* Title */
-      #ui {
-        position: fixed;
-        top: 15px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.8);
-        padding: 10px 20px;
-        border-radius: 20px;
-        z-index: 999;
-        color: white;
-        font-size: 16px;
-        font-weight: 600;
-        text-shadow: 0px 2px 8px rgba(0,0,0,0.8);
-        max-width: 70vw;
-        text-align: center;
-        backdrop-filter: blur(10px);
-      }
-
-      /* Status Indicator */
-      #status {
-        position: fixed;
-        top: 70px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(255, 0, 0, 0.8);
-        padding: 8px 16px;
-        border-radius: 15px;
-        z-index: 999;
-        color: white;
-        font-size: 12px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-      }
-
-      .status-found {
-        background: rgba(0, 255, 0, 0.8) !important;
-      }
-
-      /* Navigation Buttons */
-      .nav-button {
-        position: fixed;
-        bottom: 30px;
-        background: rgba(0,0,0,0.8);
-        border: 2px solid rgba(255,255,255,0.3);
-        color: white;
-        font-size: 18px;
-        border-radius: 50%;
-        width: 50px; 
-        height: 50px;
-        cursor: pointer;
-        z-index: 999;
-        backdrop-filter: blur(10px);
+        40% { transform: translateY(-20px); }
+        60% { transform: translateY(-10px); }
       }
       
-      #prevButton { left: 20px; }
-      #nextButton { right: 20px; }
 
-      /* Help Button */
-      #helpButton {
-        position: fixed;
-        top: 15px;
-        right: 15px;
-        background: rgba(255,255,255,0.2);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        cursor: pointer;
-        z-index: 999;
-        font-size: 18px;
-        backdrop-filter: blur(10px);
-      }
+      
+      /* Mobile Optimizations */
+      @media (max-width: 768px) {
+        #ui {
+          padding: 12px 20px;
+        }
+        
+        #title {
+          font-size: 18px;
+        }
+        
+        .nav-button {
+          width: 55px;
+          height: 55px;
+          font-size: 20px;
+          padding: 10px;
+        }
+        
+        #prevButton {
+          left: 15px;
+        }
+        
+        #nextButton {
+          right: 15px;
+        }
+        
+        .tap-instruction {
+          font-size: 20px;
+          padding: 0 20px;
+        }
+        
+        .tap-icon {
+          font-size: 60px;
+        }
+        
 
-      @media (max-width: 480px) {
-        .marker-text { font-size: 16px; }
-        .marker-subtitle { font-size: 13px; }
-        #ui { font-size: 14px; padding: 8px 16px; }
-        .nav-button { width: 45px; height: 45px; font-size: 16px; }
-        .marker-sample { width: 100px; height: 100px; }
-      }
-
-      /* Loading indicator */
-      .loading {
-        position: fixed;
-        bottom: 50%;
-        left: 50%;
-        transform: translate(-50%, 50%);
-        color: white;
-        font-size: 14px;
-        z-index: 998;
-      }
-
-      .spinner {
-        border: 2px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top: 2px solid white;
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 10px;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
       }
     </style>
   </head>
   <body>
-    <!-- Marker Instructions -->
-    <div id="markerInstructions">
-      <div class="marker-icon">📱</div>
-      <div class="marker-text">Arahkan kamera ke marker AR</div>
-      <button class="close-instructions" onclick="closeInstructions()">Mulai AR</button>
+    <!-- Tap to Play Overlay -->
+    <div id="tapOverlay">
+      <div class="tap-icon">📱</div>
+      <div class="tap-instruction">Tap layar untuk memulai AR</div>
     </div>
-
-    <!-- Loading -->
-    <div id="loading" class="loading" style="display: none;">
-      <div class="spinner"></div>
-      <div>Mencari marker...</div>
-    </div>
-
-    <!-- Title -->
+    
+    <!-- UI Controls -->
     <div id="ui">
       <div id="title">Posko KKN</div>
     </div>
-
-    <!-- Status -->
-    <div id="status">Marker tidak terdeteksi</div>
-
+    
     <!-- Navigation Buttons -->
-    <button id="prevButton" class="nav-button" onclick="prevVideo()">⏮</button>
-    <button id="nextButton" class="nav-button" onclick="nextVideo()">⏭</button>
+   <button id="prevButton" class="nav-button" title="Video Sebelumnya">
+    <i class="ri-arrow-left-line"></i>
+  </button>
 
+  <button id="nextButton" class="nav-button" title="Video Selanjutnya">
+    <i class="ri-arrow-right-line"></i>
+  </button>
+    
     <!-- AR Scene -->
     <a-scene
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+      arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
       vr-mode-ui="enabled: false"
       renderer="logarithmicDepthBuffer: true; antialias: true; colorManagement: true;"
-      loading-screen="enabled: false"
-      id="scene">
+      loading-screen="enabled: false">
+     
+      <!-- Kamera -->
+      <a-camera position="0 0.5 0" look-controls="enabled: true"></a-camera>
       
-      <!-- Assets -->
+      <!-- Plane tempat video (awalnya tersembunyi) -->
+      <a-plane 
+        id="videoPlane" 
+        position="0 0 -10" 
+        rotation="0 0 0" 
+        width="4" 
+        height="2.25" 
+        material="shader: flat; src: #vid1; opacity: 0;"
+        visible="false">
+      </a-plane>
+      
+      <!-- Asset Videos -->
       <a-assets>
-        <video id="vid1" src="asset/POSKO.mp4" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
-        <video id="vid2" src="asset/Joglo.mov" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
-        <video id="vid3" src="asset/Plunyon.mov" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
-        <video id="vid4" src="asset/Batukapal.mov" loop muted playsinline crossorigin="anonymous" preload="metadata"></video>
+        <video id="vid1" 
+               src="asset/POSKO.mp4" 
+               loop="true" 
+               muted 
+               playsinline 
+               crossorigin="anonymous"
+               preload="metadata"></video>
+        <video id="vid2" 
+               src="asset/Joglo.mov" 
+               loop="true" 
+               muted 
+               playsinline 
+               crossorigin="anonymous"
+               preload="metadata"></video>
+        <video id="vid3" 
+               src="asset/Plunyon.mov" 
+               loop="true" 
+               muted 
+               playsinline 
+               crossorigin="anonymous"
+               preload="metadata"></video>
+        <video id="vid4" 
+               src="asset/Batukapal.mov" 
+               loop="true" 
+               muted 
+               playsinline 
+               crossorigin="anonymous"
+               preload="metadata"></video>
       </a-assets>
-      
-      <!-- Marker -->
-      <a-marker preset="hiro" id="marker">
-        <!-- Video Container -->
-        <a-entity id="videoContainer" position="0 0 0" rotation="0 0 0">
-          <!-- Video Plane -->
-          <a-plane 
-            id="videoPlane" 
-            position="0 0.01 0" 
-            rotation="-90 0 0" 
-            width="2" 
-            height="1.125" 
-            material="shader: flat; src: #vid1; opacity: 1; side: double;"
-            animation__scaleIn="property: scale; from: 0.1 0.1 0.1; to: 1 1 1; dur: 500; easing: easeOutBack; autoplay: false"
-            animation__fadeIn="property: material.opacity; from: 0; to: 1; dur: 300; autoplay: false">
-          </a-plane>
-          
-          <!-- Base/Platform -->
-          <a-box
-            position="0 -0.05 0"
-            width="2.1"
-            height="0.1"
-            depth="1.18"
-            material="color: #333; metalness: 0.8; roughness: 0.2;"
-            shadow="receive: true">
-          </a-box>
-    
-        </a-entity>
-      </a-marker>
-      
-      <!-- Camera -->
-      <a-entity camera></a-entity>
     </a-scene>
 
     <script>
       const videos = [
-        { id: "#vid1", title: "Posko KKN" },
-        { id: "#vid2", title: "Joglo Wanagama" },
-        { id: "#vid3", title: "Jembatan Plunyon" },
-        { id: "#vid4", title: "Batu Kapal" }
+        { id: "vid1", title: "Posko KKN" },
+        { id: "vid2", title: "Joglo Wanagama" },
+        { id: "vid3", title: "Jembatan Plunyon" },
+        { id: "vid4", title: "Batu Kapal" }
       ];
-
+      
       let currentIndex = 0;
-      let markerVisible = false;
-
-      const marker = document.getElementById("marker");
-      const videoPlane = document.getElementById("videoPlane");
+      let videoStarted = false;
+      
+      const plane = document.getElementById("videoPlane");
       const title = document.getElementById("title");
-      const status = document.getElementById("status");
-      const instructionOverlay = document.getElementById("markerInstructions");
-      const loading = document.getElementById("loading");
-
-      // Marker detection events
-      marker.addEventListener('markerFound', function() {
-        console.log('Marker found!');
-        markerVisible = true;
-        status.innerText = "Marker terdeteksi!";
-        status.classList.add("status-found");
-        loading.style.display = "none";
-        
-        // Play current video and animate
-        updateVideo();
-        videoPlane.emit('scaleIn');
-        videoPlane.emit('fadeIn');
-      });
-
-      marker.addEventListener('markerLost', function() {
-        console.log('Marker lost!');
-        markerVisible = false;
-        status.innerText = "Marker tidak terdeteksi";
-        status.classList.remove("status-found");
-        
-        // Pause all videos when marker is lost
+      const tapOverlay = document.getElementById("tapOverlay");
+      const prevButton = document.getElementById("prevButton");
+      const nextButton = document.getElementById("nextButton");
+      
+      // Function to pause all videos except the current one
+      function pauseAllVideos() {
         videos.forEach(v => {
-          const videoEl = document.querySelector(v.id);
-          videoEl.pause();
+          const videoEl = document.getElementById(v.id);
+          if (videoEl) {
+            videoEl.pause();
+          }
         });
-      });
-
+      }
+      
+      // Function to start video on first tap
+      function startVideo() {
+        if (videoStarted) return;
+        
+        videoStarted = true;
+        tapOverlay.classList.add("hidden");
+        
+        // Show video plane
+        plane.setAttribute("visible", "true");
+        plane.setAttribute("material", "opacity", "1");
+        plane.classList.add("video-loaded");
+        
+        updateVideo();
+      }
+      
+      // Function to update video
       function updateVideo() {
-        if (!markerVisible) return;
+        if (!videoStarted) return;
         
-        const video = videos[currentIndex];
-        videoPlane.setAttribute("material", "src", video.id);
-        title.innerText = video.title;
-
-        // Stop all other videos
-        videos.forEach(v => {
-          const videoEl = document.querySelector(v.id);
-          videoEl.pause();
-        });
-
-        // Play current video
-        const currentVideoEl = document.querySelector(video.id);
-        if (currentVideoEl) {
-          currentVideoEl.currentTime = 0;
-          currentVideoEl.play().catch(e => console.log("Video play error:", e));
+        console.log('Switching to video index:', currentIndex);
+        
+        // Pause all videos first
+        pauseAllVideos();
+        
+        const v = videos[currentIndex];
+        const currentVideoEl = document.getElementById(v.id);
+        
+        if (!currentVideoEl) {
+          console.error('Video element not found:', v.id);
+          return;
         }
-
-        // Animate transition
-        videoPlane.emit('fadeIn');
+        
+        // Update material source
+        plane.setAttribute("material", "src", "#" + v.id);
+        
+        // Update UI
+        title.innerText = v.title;
+        
+        // Play current video
+        currentVideoEl.currentTime = 0; // Reset to beginning
+        const playPromise = currentVideoEl.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('Video playing successfully');
+          }).catch(error => {
+            console.error('Error playing video:', error);
+          });
+        }
       }
-
+      
+      // Navigation functions
       function nextVideo() {
+        if (!videoStarted) {
+          startVideo();
+          return;
+        }
         currentIndex = (currentIndex + 1) % videos.length;
+        console.log('Next video - new index:', currentIndex);
         updateVideo();
       }
-
+      
       function prevVideo() {
+        if (!videoStarted) {
+          startVideo();
+          return;
+        }
         currentIndex = (currentIndex - 1 + videos.length) % videos.length;
+        console.log('Previous video - new index:', currentIndex);
         updateVideo();
       }
-
-      function closeInstructions() {
-        instructionOverlay.style.display = "none";
-        loading.style.display = "block";
-      }
-
-      function showInstructions() {
-        instructionOverlay.style.display = "flex";
-      }
-
-      // Preload videos
-      videos.forEach(video => {
-        const videoEl = document.querySelector(video.id);
+      
+      // Event listeners
+      document.body.addEventListener("click", function(e) {
+        // Don't trigger startVideo if clicking navigation buttons
+        if (e.target.closest('.nav-button')) {
+          return;
+        }
+        startVideo();
+      });
+      
+      document.body.addEventListener("touchstart", function(e) {
+        // Don't trigger startVideo if touching navigation buttons
+        if (e.target.closest('.nav-button')) {
+          return;
+        }
+        startVideo();
+      });
+      
+      // Add click listeners to navigation buttons
+      nextButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        nextVideo();
+      });
+      
+      prevButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        prevVideo();
+      });
+      
+      // Add touch listeners to navigation buttons for mobile
+      nextButton.addEventListener("touchstart", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        nextVideo();
+      });
+      
+      prevButton.addEventListener("touchstart", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        prevVideo();
+      });
+      
+      // Prevent context menu on long press (mobile)
+      document.addEventListener("contextmenu", (e) => e.preventDefault());
+      
+      // Handle orientation change
+      window.addEventListener("orientationchange", () => {
+        setTimeout(() => {
+          // Refresh video if needed
+          if (videoStarted) {
+            updateVideo();
+          }
+        }, 100);
+      });
+      
+      // Initialize
+      document.addEventListener("DOMContentLoaded", () => {
+        // Wait for A-Frame to be ready
+        document.querySelector('a-scene').addEventListener('loaded', () => {
+          console.log('A-Frame scene loaded');
+        });
+      });
+      
+      // Handle video errors and loading
+      videos.forEach((v, index) => {
+        const videoEl = document.getElementById(v.id);
         if (videoEl) {
-          videoEl.load();
+          videoEl.addEventListener("error", (e) => {
+            console.error(`Error loading video ${index + 1}:`, e);
+          });
+          
+          videoEl.addEventListener("loadeddata", () => {
+            console.log(`Video ${index + 1} loaded successfully`);
+          });
+          
+          videoEl.addEventListener("canplay", () => {
+            console.log(`Video ${index + 1} can play`);
+          });
         }
       });
-
-      // Prevent context menu
-      document.addEventListener("contextmenu", e => e.preventDefault());
-
-      // Auto-close instructions after 5 seconds
-      setTimeout(() => {
-        if (instructionOverlay.style.display !== "none") {
-          closeInstructions();
+      
+      // Add keyboard controls for testing
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "ArrowRight" || e.code === "Space") {
+          e.preventDefault();
+          nextVideo();
+        } else if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          prevVideo();
         }
-      }, 8000);
+      });
     </script>
   </body>
 </html>
